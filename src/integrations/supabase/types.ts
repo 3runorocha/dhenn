@@ -14,7 +14,161 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      configuracoes: {
+        Row: {
+          cor_primaria: string
+          endereco: string | null
+          latitude: number | null
+          longitude: number | null
+          raio_busca: number
+          tema: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cor_primaria?: string
+          endereco?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          raio_busca?: number
+          tema?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cor_primaria?: string
+          endereco?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          raio_busca?: number
+          tema?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      estabelecimentos: {
+        Row: {
+          cnpj: string
+          created_at: string
+          endereco: string | null
+          latitude: number | null
+          longitude: number | null
+          nome: string
+        }
+        Insert: {
+          cnpj: string
+          created_at?: string
+          endereco?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome: string
+        }
+        Update: {
+          cnpj?: string
+          created_at?: string
+          endereco?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      estabelecimentos_usuario: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          estabelecimento_cnpj: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          estabelecimento_cnpj: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          estabelecimento_cnpj?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estabelecimentos_usuario_estabelecimento_cnpj_fkey"
+            columns: ["estabelecimento_cnpj"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["cnpj"]
+          },
+        ]
+      }
+      historico_precos: {
+        Row: {
+          consultado_em: string
+          estabelecimento_cnpj: string
+          id: string
+          preco: number
+          produto_id: string
+        }
+        Insert: {
+          consultado_em?: string
+          estabelecimento_cnpj: string
+          id?: string
+          preco: number
+          produto_id: string
+        }
+        Update: {
+          consultado_em?: string
+          estabelecimento_cnpj?: string
+          id?: string
+          preco?: number
+          produto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_precos_estabelecimento_cnpj_fkey"
+            columns: ["estabelecimento_cnpj"]
+            isOneToOne: false
+            referencedRelation: "estabelecimentos"
+            referencedColumns: ["cnpj"]
+          },
+          {
+            foreignKeyName: "historico_precos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      produtos: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          gtin: string | null
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          gtin?: string | null
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          gtin?: string | null
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
