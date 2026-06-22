@@ -59,7 +59,6 @@ function Dashboard() {
     },
   });
 
-  // seleciona primeiro produto por padrão
   useEffect(() => {
     if (!produtoId && produtosQ.data?.length) setProdutoId(produtosQ.data[0].id);
   }, [produtosQ.data, produtoId]);
@@ -101,12 +100,17 @@ function Dashboard() {
     if (!f.length) return null;
     const sorted = [...f].sort((a, b) => +new Date(b.consultado_em) - +new Date(a.consultado_em));
     const atual = sorted[0];
+    // Considera preço atual apenas se coletado nos últimos 7 dias
+    const setesDias = Date.now() - 7 * 24 * 3600 * 1000;
+    const precoAtualRecente = +new Date(atual.consultado_em) >= setesDias ? Number(atual.preco) : null;
     const anterior = sorted.find((h, i) => i > 0 && h.preco !== atual.preco) ?? sorted[1];
     const menor30 = Math.min(...f.map((h) => Number(h.preco)));
     return {
-      precoAtual: Number(atual.preco),
+      precoAtual: precoAtualRecente,
       menor30,
-      tendencia: anterior ? Math.sign(Number(atual.preco) - Number(anterior.preco)) : 0,
+      tendencia: precoAtualRecente != null && anterior
+        ? Math.sign(Number(atual.preco) - Number(anterior.preco))
+        : 0,
     };
   }
 
@@ -132,11 +136,11 @@ function Dashboard() {
   const histSelAtivos = filtraAtivos(histSel);
   const resumoSel = calcResumo(histSel);
 
-  // Gráfico: menor preço por dia
   const serie = useMemo(() => {
     const por: Record<string, number> = {};
     for (const h of histSelAtivos) {
-      const d = new Date(h.consultado_em).toISOString().slice(0, 10);
+      const dt = new Date(h.consultado_em);
+      const d = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
       const v = Number(h.preco);
       if (por[d] == null || v < por[d]) por[d] = v;
     }
@@ -145,7 +149,6 @@ function Dashboard() {
       .map(([data, preco]) => ({ data, dataLabel: fmtData(data + "T00:00:00"), preco }));
   }, [histSelAtivos]);
 
-  // Último preço por estabelecimento (ativos)
   const listaEstabs = useMemo(() => {
     const ult = new Map<string, Hist>();
     for (const h of histSelAtivos) {
@@ -217,7 +220,7 @@ function Dashboard() {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <Stat
                     label="Preço atual"
-                    valor={resumoSel ? brl(resumoSel.precoAtual) : "—"}
+                    valor={resumoSel?.precoAtual != null ? brl(resumoSel.precoAtual) : "—"}
                     icon={
                       resumoSel?.tendencia === -1
                         ? <TrendingDown className="h-4 w-4 text-green-600" />
@@ -233,7 +236,7 @@ function Dashboard() {
                     icon={<Trophy className="h-4 w-4 text-primary" />}
                   />
                   <Stat
-                    label="Estabelecimentos ativos"
+                    label="Mercados com o produto"
                     valor={String(listaEstabs.length)}
                   />
                 </div>
@@ -320,7 +323,7 @@ function Dashboard() {
                       >
                         <div className="font-medium truncate">{p.nome}</div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          Atual: {r ? brl(r.precoAtual) : "—"}
+                          Atual: {r?.precoAtual != null ? brl(r.precoAtual) : "—"}
                         </div>
                         <div className="text-xs text-primary">
                           Menor 30d: {r ? brl(r.menor30) : "—"}

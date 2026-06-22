@@ -52,10 +52,13 @@ function FormaGtin({ onDone }: { onDone: () => void }) {
     if (!gtin || !nome) return toast.error("Informe GTIN e nome");
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) return setLoading(false);
     const { error } = await supabase.from("produtos").insert({ gtin, nome, user_id: user.id });
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.code === "23505") return toast.error("Você já cadastrou esse produto.");
+      return toast.error(error.message);
+    }
     toast.success("Produto adicionado. Os preços serão coletados em breve.");
     onDone();
   }
@@ -125,7 +128,10 @@ function FormaBusca({ onDone }: { onDone: () => void }) {
       nome: r.descricao || `Produto ${r.gtin}`,
       user_id: user.id,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      if (error.code === "23505") return toast.error("Você já cadastrou esse produto.");
+      return toast.error(error.message);
+    }
     toast.success("Produto adicionado!");
     onDone();
   }

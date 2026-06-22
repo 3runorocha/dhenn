@@ -50,7 +50,6 @@ function Configuracoes() {
     setCor(q.data.cor_primaria ?? "#2563eb");
   }, [q.data]);
 
-  // Preview ao vivo
   useEffect(() => {
     applyTheme({ tema, cor_primaria: cor });
   }, [tema, cor]);
@@ -77,7 +76,8 @@ function Configuracoes() {
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("configuracoes")
-      .update({
+      .upsert({
+        user_id: user!.id,
         endereco,
         latitude: lat,
         longitude: lng,
@@ -85,8 +85,7 @@ function Configuracoes() {
         tema,
         cor_primaria: cor,
         updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user!.id);
+      });
     setSalvando(false);
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["minha-configuracao"] });

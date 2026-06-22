@@ -9,6 +9,7 @@ import { toast } from "sonner";
 
 const nav = [
   { to: "/", label: "Painel", icon: LayoutDashboard },
+  { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/estabelecimentos", label: "Estabelecimentos", icon: Store },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ];
@@ -37,7 +38,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     if (!user) return;
     const novo = cfg?.tema === "dark" ? "light" : "dark";
     applyTheme({ tema: novo, cor_primaria: cfg?.cor_primaria });
-    await supabase.from("configuracoes").update({ tema: novo }).eq("user_id", user.id);
+    await supabase.from("configuracoes").upsert({ user_id: user.id, tema: novo });
     qc.invalidateQueries({ queryKey: ["minha-configuracao"] });
   }
 

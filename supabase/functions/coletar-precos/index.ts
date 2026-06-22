@@ -1,6 +1,5 @@
-// Coleta preços de produtos cadastrados consultando a API da SEFAZ/AL.
-// Pode ser chamada via pg_cron (sem usuário) — itera todos os produtos de todos os usuários
-// ou com body { user_id } para coletar somente daquele usuário.
+// Coleta preços via API da SEFAZ/AL. Sem body itera todos os usuários (pg_cron);
+// com body { user_id } coleta apenas daquele usuário.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -67,7 +66,6 @@ Deno.serve(async (req) => {
       /* sem body */
     }
 
-    // Lista produtos com gtin e configurações do usuário
     let q = supabase
       .from("produtos")
       .select("id, user_id, gtin, nome")
@@ -82,7 +80,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Pega configs únicas dos usuários envolvidos
     const userIds = [...new Set(produtos.map((p) => p.user_id))];
     const { data: configs } = await supabase
       .from("configuracoes")
@@ -109,7 +106,6 @@ Deno.serve(async (req) => {
           const preco = item.produto?.venda?.valorVenda;
           if (!cnpj || preco == null) continue;
 
-          // upsert estabelecimento
           await supabase.from("estabelecimentos").upsert(
             {
               cnpj,
@@ -121,7 +117,6 @@ Deno.serve(async (req) => {
             { onConflict: "cnpj" },
           );
 
-          // garante estabelecimento_usuario
           await supabase
             .from("estabelecimentos_usuario")
             .upsert(
@@ -129,7 +124,6 @@ Deno.serve(async (req) => {
               { onConflict: "user_id,estabelecimento_cnpj", ignoreDuplicates: true },
             );
 
-          // insere preço
           const { error: errH } = await supabase.from("historico_precos").insert({
             produto_id: p.id,
             estabelecimento_cnpj: cnpj,
