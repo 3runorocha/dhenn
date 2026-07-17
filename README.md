@@ -87,12 +87,13 @@ sudo firewall-cmd --reload
 
 ### 2.2 Instalar o runtime
 
-O projeto usa **bun** (há `bun.lock`). Instale bun (Node 20+ também serve para rodar o build):
+O projeto usa **Node.js 20+** e **npm** (lockfile `package-lock.json`):
 
 ```bash
-curl -fsSL https://bun.sh/install | bash
-exec $SHELL        # recarrega o PATH
-bun --version
+# Ubuntu — Node 20 LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+node --version && npm --version
 ```
 
 ### 2.3 Clonar e configurar variáveis
@@ -112,20 +113,19 @@ cat .env
 > ⚠️ Nunca adicione a **service_role key** ou o **SEFAZ_APP_TOKEN** ao `.env` — eles ficam
 > só nos secrets do Supabase (Parte 1). As variáveis `VITE_*` são lidas em **tempo de build**.
 
-### 2.4 Instalar dependências e buildar (preset Node)
+### 2.4 Instalar dependências e buildar
 
-O build padrão mira Cloudflare; para a VM force o preset Node do Nitro:
+O build já usa o preset **node-server** do Nitro por padrão (definido no `vite.config.ts`):
 
 ```bash
-bun install
-NITRO_PRESET=node-server bun run build
+npm install
+npm run build
 ```
 
 Isso gera o servidor em `.output/server/index.mjs`.
 
-> Se o `.output/server/index.mjs` não for criado (o build saiu como worker Cloudflare),
-> adicione o preset no `vite.config.ts` via `defineConfig({ nitro: { preset: "node-server" } })`
-> e rode `bun run build` de novo.
+> Precisa de outro alvo (ex.: Cloudflare)? Rode `NITRO_PRESET=<preset> npm run build` —
+> a env sobrescreve o padrão sem tocar no config.
 
 ### 2.5 Rodar
 
@@ -206,8 +206,8 @@ sudo certbot --nginx -d seu-dominio.com
 ```bash
 cd ~/dhenn
 git pull
-bun install
-NITRO_PRESET=node-server bun run build
+npm install
+npm run build
 sudo systemctl restart dhenn
 ```
 
@@ -216,13 +216,13 @@ sudo systemctl restart dhenn
 ## Desenvolvimento local
 
 ```bash
-bun install
-bun run dev        # http://localhost:3000
+npm install
+npm run dev        # http://localhost:8080
 ```
 
 | Script            | O que faz                          |
 | ----------------- | ---------------------------------- |
-| `bun run dev`     | servidor de desenvolvimento (HMR)  |
-| `bun run build`   | build de produção                  |
-| `bun run preview` | pré-visualiza o build              |
-| `bun run lint`    | ESLint                             |
+| `npm run dev`     | servidor de desenvolvimento (HMR)  |
+| `npm run build`   | build de produção (preset node)    |
+| `npm run preview` | pré-visualiza o build              |
+| `npm run lint`    | ESLint                             |
