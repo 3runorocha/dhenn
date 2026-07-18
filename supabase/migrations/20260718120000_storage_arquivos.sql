@@ -17,6 +17,7 @@ select cron.schedule('arquivar-semana', '0 6 * * 1', $$
   select net.http_post(
     url := 'https://wflarolzpwwecyarwpci.supabase.co/functions/v1/arquivar-semana',
     headers := jsonb_build_object('Content-Type', 'application/json'),
-    body := '{}'::jsonb
+    body := '{}'::jsonb,
+    timeout_milliseconds := 60000
   );
 $$);
