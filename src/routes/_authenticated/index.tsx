@@ -4,7 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, RefreshCcw, ChevronRight } from "lucide-react";
+import { Plus, RefreshCcw, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   brl, fmtDia, fmtHora, useProdutos, useAtivos, useEstabs, useHistorico, listaEstabsOrdenada,
@@ -25,6 +25,7 @@ const fmtDataHora = (d?: string | null) =>
 function Painel() {
   const navigate = useNavigate();
   const [coletando, setColetando] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const produtosQ = useProdutos();
   const ativosQ = useAtivos();
@@ -65,6 +66,67 @@ function Painel() {
     }
   }
 
+  async function exportarCsv() {
+    const produtos = produtosQ.data ?? [];
+    if (!produtos.length) return toast.info("Nenhum produto pra exportar.");
+    setExportando(true);
+    try {
+      const prodMap = new Map(produtos.map((p) => [p.id, p]));
+      const ids = produtos.map((p) => p.id);
+      const rows: Hist[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase
+          .from("historico_precos")
+          .select("id, produto_id, estabelecimento_cnpj, preco, consultado_em")
+          .in("produto_id", ids)
+          .order("consultado_em", { ascending: true })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        const page = (data ?? []) as Hist[];
+        rows.push(...page);
+        if (page.length < pageSize) break;
+      }
+      if (!rows.length) return toast.info("Sem histórico pra exportar ainda.");
+
+      const esc = (v: unknown) => {
+        const s = String(v ?? "");
+        return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const header = ["produto", "gtin", "estabelecimento", "cnpj", "endereco", "preco", "data", "hora"];
+      const linhas = [header.join(";")];
+      for (const r of rows) {
+        const p = prodMap.get(r.produto_id);
+        const e = estabs.get(r.estabelecimento_cnpj);
+        const dt = new Date(r.consultado_em);
+        linhas.push([
+          p?.nome,
+          p?.gtin,
+          e?.nome ?? r.estabelecimento_cnpj,
+          r.estabelecimento_cnpj,
+          e?.endereco,
+          Number(r.preco).toFixed(2).replace(".", ","),
+          dt.toLocaleDateString("pt-BR"),
+          dt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+        ].map(esc).join(";"));
+      }
+
+      const csv = "﻿" + linhas.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `dhenn-historico-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`CSV exportado — ${rows.length} registro(s).`);
+    } catch (e) {
+      toast.error("Erro ao exportar: " + String(e));
+    } finally {
+      setExportando(false);
+    }
+  }
+
   const semProdutos = produtosQ.isFetched && !produtosQ.data?.length;
   const linhas = (produtosQ.data ?? []).map((p) => ({
     produto: p,
@@ -78,7 +140,11 @@ function Painel() {
           <h1 className="text-2xl font-bold">Painel</h1>
           <p className="text-sm text-muted-foreground">Menor preço atual de cada produto</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportarCsv} disabled={exportando}>
+            <Download className="h-4 w-4 mr-1" />
+            {exportando ? "Exportando…" : "Exportar CSV"}
+          </Button>
           <Button variant="outline" onClick={coletarAgora} disabled={coletando}>
             <RefreshCcw className={`h-4 w-4 mr-1 ${coletando ? "animate-spin" : ""}`} />
             Coletar agora
