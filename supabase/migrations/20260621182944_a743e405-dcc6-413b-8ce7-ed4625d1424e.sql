@@ -49,6 +49,7 @@ CREATE TABLE public.estabelecimentos_usuario (
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   estabelecimento_cnpj text NOT NULL REFERENCES public.estabelecimentos(cnpj) ON DELETE CASCADE,
   ativo boolean NOT NULL DEFAULT true,
+  apelido text,
   created_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, estabelecimento_cnpj)
 );

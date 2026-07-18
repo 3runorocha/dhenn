@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, RefreshCcw, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
-  brl, fmtDia, fmtHora, useProdutos, useAtivos, useEstabs, useHistorico, listaEstabsOrdenada,
+  brl, fmtDia, fmtHora, useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, listaEstabsOrdenada,
   type Estab, type Hist,
 } from "@/lib/precos";
 
@@ -45,8 +45,10 @@ function Painel() {
     },
   });
 
+  const apelidosQ = useApelidos();
   const ativos = ativosQ.data ?? new Set<string>();
   const estabs = estabsQ.data ?? new Map<string, Estab>();
+  const apelidos = apelidosQ.data ?? new Map<string, string>();
   const histMap = historicoQ.data ?? new Map<string, Hist[]>();
 
   async function coletarAgora() {
@@ -130,7 +132,7 @@ function Painel() {
   const semProdutos = produtosQ.isFetched && !produtosQ.data?.length;
   const linhas = (produtosQ.data ?? []).map((p) => ({
     produto: p,
-    melhor: listaEstabsOrdenada(histMap.get(p.id) ?? [], ativos, estabs)[0],
+    melhor: listaEstabsOrdenada(histMap.get(p.id) ?? [], ativos, estabs, apelidos)[0],
   }));
 
   return (
@@ -198,9 +200,7 @@ function Painel() {
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate">{produto.nome}</div>
                     <div className="text-xs text-muted-foreground truncate">
-                      {melhor
-                        ? (melhor.estab?.nome ?? melhor.estabelecimento_cnpj)
-                        : "Sem preço ainda — colete os dados"}
+                      {melhor ? melhor.nome : "Sem preço ainda — colete os dados"}
                     </div>
                   </div>
                   <div className="w-20 text-right text-xs text-muted-foreground shrink-0 hidden sm:block">

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useProdutos, useAtivos, useEstabs, useHistorico, type Estab, type Hist,
+  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, type Estab, type Hist,
 } from "@/lib/precos";
 import { ProdutoDetalhe } from "@/components/produto-detalhe";
 
@@ -29,8 +29,10 @@ function Produtos() {
   const estabsQ = useEstabs();
   const historicoQ = useHistorico(produtosQ.data?.map((x) => x.id));
 
+  const apelidosQ = useApelidos();
   const ativos = ativosQ.data ?? new Set<string>();
   const estabs = estabsQ.data ?? new Map<string, Estab>();
+  const apelidos = apelidosQ.data ?? new Map<string, string>();
   const histMap = historicoQ.data ?? new Map<string, Hist[]>();
 
   async function excluir(id: string, nome: string) {
@@ -107,6 +109,7 @@ function Produtos() {
                           hist={histMap.get(prod.id) ?? []}
                           ativos={ativos}
                           estabs={estabs}
+                          apelidos={apelidos}
                         />
                       </div>
                     )}

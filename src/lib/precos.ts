@@ -56,6 +56,23 @@ export function useEstabs() {
   });
 }
 
+// Apelidos por usuário (cnpj -> apelido) definidos na tela de Estabelecimentos.
+export function useApelidos() {
+  return useQuery({
+    queryKey: ["estab-apelidos"],
+    queryFn: async (): Promise<Map<string, string>> => {
+      const { data } = await supabase
+        .from("estabelecimentos_usuario")
+        .select("estabelecimento_cnpj, apelido");
+      return new Map(
+        (data ?? [])
+          .filter((r) => r.apelido)
+          .map((r) => [r.estabelecimento_cnpj, r.apelido as string]),
+      );
+    },
+  });
+}
+
 export function useHistorico(produtoIds: string[] | undefined) {
   return useQuery({
     queryKey: ["historico-todos", produtoIds?.join(",")],
@@ -105,8 +122,22 @@ export function calcResumo(hs: Hist[], ativos: Set<string>) {
   };
 }
 
+// Nome de exibição: apelido do usuário > nome da SEFAZ > CNPJ cru.
+export function nomeExib(
+  cnpj: string,
+  estabs: Map<string, Estab>,
+  apelidos?: Map<string, string>,
+) {
+  return apelidos?.get(cnpj) || estabs.get(cnpj)?.nome || cnpj;
+}
+
 // Último preço por estabelecimento ativo, do menor pro maior.
-export function listaEstabsOrdenada(hs: Hist[], ativos: Set<string>, estabs: Map<string, Estab>) {
+export function listaEstabsOrdenada(
+  hs: Hist[],
+  ativos: Set<string>,
+  estabs: Map<string, Estab>,
+  apelidos?: Map<string, string>,
+) {
   const f = filtraAtivos(hs, ativos);
   const ult = new Map<string, Hist>();
   for (const h of f) {
@@ -116,6 +147,10 @@ export function listaEstabsOrdenada(hs: Hist[], ativos: Set<string>, estabs: Map
     }
   }
   return [...ult.values()]
-    .map((h) => ({ ...h, estab: estabs.get(h.estabelecimento_cnpj) }))
+    .map((h) => ({
+      ...h,
+      estab: estabs.get(h.estabelecimento_cnpj),
+      nome: nomeExib(h.estabelecimento_cnpj, estabs, apelidos),
+    }))
     .sort((a, b) => Number(a.preco) - Number(b.preco));
 }

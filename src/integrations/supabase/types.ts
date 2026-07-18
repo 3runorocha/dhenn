@@ -82,18 +82,21 @@ export type Database = {
       }
       estabelecimentos_usuario: {
         Row: {
+          apelido: string | null
           ativo: boolean
           created_at: string
           estabelecimento_cnpj: string
           user_id: string
         }
         Insert: {
+          apelido?: string | null
           ativo?: boolean
           created_at?: string
           estabelecimento_cnpj: string
           user_id: string
         }
         Update: {
+          apelido?: string | null
           ativo?: boolean
           created_at?: string
           estabelecimento_cnpj?: string

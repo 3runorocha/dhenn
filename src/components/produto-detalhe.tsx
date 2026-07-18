@@ -4,15 +4,15 @@ import {
 } from "recharts";
 import { TrendingDown, TrendingUp, Trophy, X } from "lucide-react";
 import {
-  brl, fmtData, fmtDia, fmtHora, calcResumo, filtraAtivos, listaEstabsOrdenada,
+  brl, fmtData, fmtDia, fmtHora, calcResumo, filtraAtivos, listaEstabsOrdenada, nomeExib,
   type Hist, type Estab,
 } from "@/lib/precos";
 
 type Popup = { x: number; y: number; data: string; preco: number; estab: string };
 
 export function ProdutoDetalhe({
-  hist, ativos, estabs,
-}: { hist: Hist[]; ativos: Set<string>; estabs: Map<string, Estab> }) {
+  hist, ativos, estabs, apelidos,
+}: { hist: Hist[]; ativos: Set<string>; estabs: Map<string, Estab>; apelidos: Map<string, string> }) {
   const resumo = calcResumo(hist, ativos);
   const [popup, setPopup] = useState<Popup | null>(null);
 
@@ -32,11 +32,14 @@ export function ProdutoDetalhe({
         data,
         dataLabel: fmtData(data + "T00:00:00"),
         preco,
-        estabNome: estabs.get(cnpj)?.nome ?? cnpj,
+        estabNome: nomeExib(cnpj, estabs, apelidos),
       }));
-  }, [hist, ativos, estabs]);
+  }, [hist, ativos, estabs, apelidos]);
 
-  const lista = useMemo(() => listaEstabsOrdenada(hist, ativos, estabs), [hist, ativos, estabs]);
+  const lista = useMemo(
+    () => listaEstabsOrdenada(hist, ativos, estabs, apelidos),
+    [hist, ativos, estabs, apelidos],
+  );
 
   return (
     <div className="space-y-6">
@@ -137,7 +140,7 @@ export function ProdutoDetalhe({
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate flex items-center gap-2">
                       {i === 0 && <Trophy className="h-3.5 w-3.5 text-primary shrink-0" />}
-                      <span className="truncate">{it.estab?.nome ?? it.estabelecimento_cnpj}</span>
+                      <span className="truncate">{it.nome}</span>
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{it.estab?.endereco}</div>
                   </div>
