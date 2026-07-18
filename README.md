@@ -87,11 +87,11 @@ sudo firewall-cmd --reload
 
 ### 2.2 Instalar o runtime
 
-O projeto usa **Node.js 20+** e **npm** (lockfile `package-lock.json`):
+O projeto usa **Node.js 22+** e **npm** (lockfile `package-lock.json`):
 
 ```bash
-# Ubuntu — Node 20 LTS via NodeSource
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# Ubuntu — Node 22 LTS via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 node --version && npm --version
 ```
