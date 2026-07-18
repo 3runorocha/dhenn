@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, ChevronDown, Upload, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, useColetas, imagemUrl, fmtDataHora,
+  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, useColetas, useCategorias,
+  imagemUrl, fmtDataHora,
   type Estab, type Hist, type Produto,
 } from "@/lib/precos";
 import { ProdutoDetalhe } from "@/components/produto-detalhe";
@@ -32,6 +33,8 @@ function Produtos() {
 
   const apelidosQ = useApelidos();
   const coletasQ = useColetas();
+  const categoriasQ = useCategorias();
+  const catMap = new Map((categoriasQ.data ?? []).map((c) => [c.id, c.nome]));
   const ativos = ativosQ.data ?? new Set<string>();
   const estabs = estabsQ.data ?? new Map<string, Estab>();
   const apelidos = apelidosQ.data ?? new Map<string, string>();
@@ -120,7 +123,14 @@ function Produtos() {
                           className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
                         />
                         <span className="min-w-0">
-                          <span className="block font-medium truncate">{prod.nome}</span>
+                          <span className="flex items-center gap-2">
+                            <span className="font-medium truncate">{prod.nome}</span>
+                            {prod.categoria_id && catMap.get(prod.categoria_id) && (
+                              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
+                                {catMap.get(prod.categoria_id)}
+                              </span>
+                            )}
+                          </span>
                           <span className="block text-xs text-muted-foreground">
                             {prod.gtin ? `GTIN ${prod.gtin}` : "Sem GTIN"}
                             {prod.created_at && ` · adicionado em ${new Date(prod.created_at).toLocaleDateString("pt-BR")}`}

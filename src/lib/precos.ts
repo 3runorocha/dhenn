@@ -7,7 +7,9 @@ export type Produto = {
   gtin: string | null;
   created_at?: string;
   imagem_path?: string | null;
+  categoria_id?: string | null;
 };
+export type Categoria = { id: string; nome: string };
 export type Estab = { cnpj: string; nome: string; endereco: string | null };
 export type Hist = {
   id: string;
@@ -64,15 +66,29 @@ export function useProdutos() {
   return useQuery({
     queryKey: ["produtos"],
     queryFn: async (): Promise<Produto[]> => {
-      const first = await supabase.from("produtos").select("id, nome, gtin, created_at, imagem_path");
+      const first = await supabase
+        .from("produtos")
+        .select("id, nome, gtin, created_at, imagem_path, categoria_id");
       let rows = first.data as Produto[] | null;
       if (first.error) {
-        // coluna imagem_path ainda não existe — cai pro select básico
-        const fb = await supabase.from("produtos").select("id, nome, gtin, created_at");
+        // coluna categoria_id ainda não existe — cai pro select sem ela
+        const fb = await supabase.from("produtos").select("id, nome, gtin, created_at, imagem_path");
         if (fb.error) throw fb.error;
         rows = fb.data as Produto[] | null;
       }
       return (rows ?? []).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    },
+  });
+}
+
+// Categorias do usuário. Retorna [] se a tabela ainda não existir.
+export function useCategorias() {
+  return useQuery({
+    queryKey: ["categorias"],
+    queryFn: async (): Promise<Categoria[]> => {
+      const { data, error } = await supabase.from("categorias").select("id, nome");
+      if (error) return [];
+      return (data ?? []).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     },
   });
 }

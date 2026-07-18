@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      categorias: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       configuracoes: {
         Row: {
           cor_primaria: string
@@ -156,6 +177,7 @@ export type Database = {
       }
       produtos: {
         Row: {
+          categoria_id: string | null
           created_at: string
           descricao: string | null
           gtin: string | null
@@ -165,6 +187,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           gtin?: string | null
@@ -174,6 +197,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          categoria_id?: string | null
           created_at?: string
           descricao?: string | null
           gtin?: string | null

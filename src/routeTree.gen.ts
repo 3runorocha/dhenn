@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedEstabelecimentosRouteImport } from './routes/_authenticated/estabelecimentos'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedCategoriasRouteImport } from './routes/_authenticated/categorias'
 import { Route as AuthenticatedArquivosRouteImport } from './routes/_authenticated/arquivos'
 import { Route as AuthenticatedProdutosIndexRouteImport } from './routes/_authenticated/produtos.index'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos.novo'
@@ -44,6 +45,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCategoriasRoute = AuthenticatedCategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedArquivosRoute = AuthenticatedArquivosRouteImport.update({
   id: '/arquivos',
   path: '/arquivos',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/arquivos': typeof AuthenticatedArquivosRoute
+  '/categorias': typeof AuthenticatedCategoriasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/arquivos': typeof AuthenticatedArquivosRoute
+  '/categorias': typeof AuthenticatedCategoriasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/': typeof AuthenticatedIndexRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/arquivos': typeof AuthenticatedArquivosRoute
+  '/_authenticated/categorias': typeof AuthenticatedCategoriasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/arquivos'
+    | '/categorias'
     | '/configuracoes'
     | '/estabelecimentos'
     | '/produtos/novo'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/auth'
     | '/arquivos'
+    | '/categorias'
     | '/configuracoes'
     | '/estabelecimentos'
     | '/'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/arquivos'
+    | '/_authenticated/categorias'
     | '/_authenticated/configuracoes'
     | '/_authenticated/estabelecimentos'
     | '/_authenticated/'
@@ -164,6 +176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/categorias': {
+      id: '/_authenticated/categorias'
+      path: '/categorias'
+      fullPath: '/categorias'
+      preLoaderRoute: typeof AuthenticatedCategoriasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/arquivos': {
       id: '/_authenticated/arquivos'
       path: '/arquivos'
@@ -190,6 +209,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedArquivosRoute: typeof AuthenticatedArquivosRoute
+  AuthenticatedCategoriasRoute: typeof AuthenticatedCategoriasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedEstabelecimentosRoute: typeof AuthenticatedEstabelecimentosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -199,6 +219,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedArquivosRoute: AuthenticatedArquivosRoute,
+  AuthenticatedCategoriasRoute: AuthenticatedCategoriasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedEstabelecimentosRoute: AuthenticatedEstabelecimentosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,

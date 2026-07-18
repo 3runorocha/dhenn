@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Moon, Sun, Package, Store, Settings, LayoutDashboard, Files } from "lucide-react";
+import { LogOut, Moon, Sun, Package, Store, Settings, LayoutDashboard, Files, Tag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 const nav = [
   { to: "/", label: "Painel", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
+  { to: "/categorias", label: "Categorias", icon: Tag },
   { to: "/estabelecimentos", label: "Estabelecimentos", icon: Store },
   { to: "/arquivos", label: "Arquivos", icon: Files },
   { to: "/configuracoes", label: "Configurações", icon: Settings },

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,14 +6,39 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Barcode } from "lucide-react";
 import { toast } from "sonner";
+import { useCategorias } from "@/lib/precos";
 
 export const Route = createFileRoute("/_authenticated/produtos/novo")({
   component: NovoProduto,
 });
 
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function CategoriaSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const cats = useCategorias();
+  return (
+    <div className="space-y-1">
+      <Label>Categoria (opcional)</Label>
+      {cats.data?.length ? (
+        <Select value={value || undefined} onValueChange={onChange}>
+          <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+          <SelectContent>
+            {cats.data.map((c) => (
+              <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Nenhuma categoria ainda. <Link to="/categorias" className="underline">Cadastrar categorias</Link>.
+        </p>
+      )}
+    </div>
+  );
+}
 
 function NovoProduto() {
   const navigate = useNavigate();
@@ -46,6 +71,7 @@ function NovoProduto() {
 function FormaGtin({ onDone }: { onDone: () => void }) {
   const [gtin, setGtin] = useState("");
   const [nome, setNome] = useState("");
+  const [categoriaId, setCategoriaId] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function salvar() {
@@ -53,7 +79,9 @@ function FormaGtin({ onDone }: { onDone: () => void }) {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return setLoading(false);
-    const { error } = await supabase.from("produtos").insert({ gtin, nome, user_id: user.id });
+    const { error } = await supabase
+      .from("produtos")
+      .insert({ gtin, nome, user_id: user.id, categoria_id: categoriaId || null });
     setLoading(false);
     if (error) {
       if (error.code === "23505") return toast.error("Você já cadastrou esse produto.");
@@ -73,6 +101,7 @@ function FormaGtin({ onDone }: { onDone: () => void }) {
         <Label>Nome do produto</Label>
         <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Coca-Cola 2L" />
       </div>
+      <CategoriaSelect value={categoriaId} onChange={setCategoriaId} />
       <Button onClick={salvar} disabled={loading} className="w-full">
         {loading ? "Salvando…" : "Adicionar"}
       </Button>
@@ -86,6 +115,7 @@ function FormaBusca({ onDone }: { onDone: () => void }) {
   const [termo, setTermo] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [resultados, setResultados] = useState<Resultado[]>([]);
+  const [categoriaId, setCategoriaId] = useState("");
 
   async function buscar() {
     if (termo.trim().length < 3) return toast.error("Digite ao menos 3 caracteres");
@@ -127,6 +157,7 @@ function FormaBusca({ onDone }: { onDone: () => void }) {
       gtin: r.gtin,
       nome: r.descricao || `Produto ${r.gtin}`,
       user_id: user.id,
+      categoria_id: categoriaId || null,
     });
     if (error) {
       if (error.code === "23505") return toast.error("Você já cadastrou esse produto.");
@@ -138,6 +169,7 @@ function FormaBusca({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="space-y-3">
+      <CategoriaSelect value={categoriaId} onChange={setCategoriaId} />
       <div className="flex gap-2">
         <Input
           value={termo}
