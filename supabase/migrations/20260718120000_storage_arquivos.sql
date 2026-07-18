@@ -12,15 +12,11 @@ create policy "arquivos_own_read" on storage.objects for select to authenticated
   using (bucket_id = 'arquivos' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Arquivamento semanal: segunda 06:00 UTC (03:00 BR). Pega a semana anterior
--- (seg-dom). Bearer = anon key pública (ver .env); troque <ANON_KEY>.
+-- (seg-dom). Sem bearer — a função é deployada com verify_jwt = false (config.toml).
 select cron.schedule('arquivar-semana', '0 6 * * 1', $$
   select net.http_post(
     url := 'https://wflarolzpwwecyarwpci.supabase.co/functions/v1/arquivar-semana',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer <ANON_KEY>',
-      'apikey', '<ANON_KEY>'
-    ),
+    headers := jsonb_build_object('Content-Type', 'application/json'),
     body := '{}'::jsonb
   );
 $$);

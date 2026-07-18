@@ -1,1 +1,10 @@
 project_id = "wflarolzpwwecyarwpci"
+
+# Funções chamadas pelo cron (pg_net) — sem JWT, pra não depender de guardar
+# a anon key no comando do cron. Fazem o trabalho privilegiado com a
+# service_role injetada automaticamente pelo Supabase.
+[functions.coletar-precos]
+verify_jwt = false
+
+[functions.arquivar-semana]
+verify_jwt = false
