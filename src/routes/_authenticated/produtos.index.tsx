@@ -4,12 +4,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, ChevronDown, Upload, ImagePlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, ChevronDown, Upload, ImagePlus, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import {
   useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, useColetas, useCategorias,
   imagemUrl, fmtDataHora,
-  type Estab, type Hist, type Produto,
+  type Estab, type Hist, type Produto, type Categoria,
 } from "@/lib/precos";
 import { ProdutoDetalhe } from "@/components/produto-detalhe";
 
@@ -25,6 +28,7 @@ function Produtos() {
   const qc = useQueryClient();
   const { p } = Route.useSearch();
   const [aberto, setAberto] = useState<string | null>(p ?? null);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   const produtosQ = useProdutos();
   const ativosQ = useAtivos();
@@ -160,21 +164,38 @@ function Produtos() {
                               <ImagePlus className="h-6 w-6 text-muted-foreground" />
                             </div>
                           )}
-                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent">
-                            <Upload className="h-4 w-4" />
-                            {prod.imagem_path ? "Trocar imagem" : "Adicionar imagem"}
-                            <input
-                              type="file"
-                              accept="image/png,image/webp,image/jpeg"
-                              className="hidden"
-                              onChange={(ev) => {
-                                const f = ev.target.files?.[0];
-                                if (f) enviarImagem(prod, f);
-                                ev.target.value = "";
-                              }}
-                            />
-                          </label>
+                          <div className="flex flex-col items-start gap-2">
+                            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent">
+                              <Upload className="h-4 w-4" />
+                              {prod.imagem_path ? "Trocar imagem" : "Adicionar imagem"}
+                              <input
+                                type="file"
+                                accept="image/png,image/webp,image/jpeg"
+                                className="hidden"
+                                onChange={(ev) => {
+                                  const f = ev.target.files?.[0];
+                                  if (f) enviarImagem(prod, f);
+                                  ev.target.value = "";
+                                }}
+                              />
+                            </label>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditandoId((c) => (c === prod.id ? null : prod.id))}
+                            >
+                              <Pencil className="h-4 w-4 mr-1" />
+                              {editandoId === prod.id ? "Fechar edição" : "Editar produto"}
+                            </Button>
+                          </div>
                         </div>
+                        {editandoId === prod.id && (
+                          <EditarProduto
+                            prod={prod}
+                            categorias={categoriasQ.data ?? []}
+                            onSaved={() => setEditandoId(null)}
+                          />
+                        )}
                         <ProdutoDetalhe
                           hist={histMap.get(prod.id) ?? []}
                           ativos={ativos}
@@ -190,6 +211,67 @@ function Produtos() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function EditarProduto({
+  prod, categorias, onSaved,
+}: { prod: Produto; categorias: Categoria[]; onSaved: () => void }) {
+  const qc = useQueryClient();
+  const [nome, setNome] = useState(prod.nome);
+  const [gtin, setGtin] = useState(prod.gtin ?? "");
+  const [categoriaId, setCategoriaId] = useState(prod.categoria_id ?? "");
+  const [salvando, setSalvando] = useState(false);
+
+  async function salvar() {
+    if (!nome.trim()) return toast.error("Informe o nome.");
+    setSalvando(true);
+    const { error } = await supabase
+      .from("produtos")
+      .update({
+        nome: nome.trim(),
+        gtin: gtin.trim() || null,
+        categoria_id: categoriaId && categoriaId !== "__none__" ? categoriaId : null,
+      })
+      .eq("id", prod.id);
+    setSalvando(false);
+    if (error) {
+      if (error.code === "23505") return toast.error("Já existe um produto com esse GTIN.");
+      return toast.error(error.message);
+    }
+    toast.success("Produto atualizado.");
+    qc.invalidateQueries({ queryKey: ["produtos"] });
+    onSaved();
+  }
+
+  return (
+    <div className="rounded-md border p-3 space-y-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label>Nome</Label>
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>GTIN</Label>
+          <Input value={gtin} onChange={(e) => setGtin(e.target.value)} placeholder="Sem GTIN" />
+        </div>
+        <div className="space-y-1">
+          <Label>Categoria</Label>
+          <Select value={categoriaId || undefined} onValueChange={setCategoriaId}>
+            <SelectTrigger><SelectValue placeholder="Sem categoria" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">(nenhuma)</SelectItem>
+              {categorias.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <Button size="sm" onClick={salvar} disabled={salvando}>
+        {salvando ? "Salvando…" : "Salvar alterações"}
+      </Button>
     </div>
   );
 }
