@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, RefreshCcw, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import {
-  brl, useProdutos, useAtivos, useEstabs, useHistorico, listaEstabsOrdenada,
+  brl, fmtDia, fmtHora, useProdutos, useAtivos, useEstabs, useHistorico, listaEstabsOrdenada,
   type Estab, type Hist,
 } from "@/lib/precos";
 
@@ -110,32 +110,48 @@ function Painel() {
           </CardContent>
         </Card>
       ) : (
-        <ul className="divide-y border rounded-md overflow-hidden">
-          {linhas.map(({ produto, melhor }) => (
-            <li key={produto.id}>
-              <button
-                onClick={() => navigate({ to: "/produtos", search: { p: produto.id } })}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  {produto.nome.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium truncate">{produto.nome}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {melhor
-                      ? (melhor.estab?.nome ?? melhor.estabelecimento_cnpj)
-                      : "Sem preço ainda — colete os dados"}
+        <div className="border rounded-md overflow-hidden">
+          <div className="flex items-center gap-3 px-4 py-2 text-[11px] uppercase tracking-wide text-muted-foreground bg-muted/40 border-b">
+            <div className="w-9 shrink-0" />
+            <div className="flex-1">Produto</div>
+            <div className="w-20 text-right hidden sm:block">Data</div>
+            <div className="w-12 text-right hidden sm:block">Hora</div>
+            <div className="w-24 text-right">Valor</div>
+            <div className="w-4 shrink-0" />
+          </div>
+          <ul className="divide-y">
+            {linhas.map(({ produto, melhor }) => (
+              <li key={produto.id}>
+                <button
+                  onClick={() => navigate({ to: "/produtos", search: { p: produto.id } })}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    {produto.nome.charAt(0).toUpperCase()}
                   </div>
-                </div>
-                <div className="font-semibold text-primary shrink-0">
-                  {melhor ? brl(Number(melhor.preco)) : "—"}
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-              </button>
-            </li>
-          ))}
-        </ul>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{produto.nome}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {melhor
+                        ? (melhor.estab?.nome ?? melhor.estabelecimento_cnpj)
+                        : "Sem preço ainda — colete os dados"}
+                    </div>
+                  </div>
+                  <div className="w-20 text-right text-xs text-muted-foreground shrink-0 hidden sm:block">
+                    {melhor ? fmtDia(melhor.consultado_em) : "—"}
+                  </div>
+                  <div className="w-12 text-right text-xs text-muted-foreground shrink-0 hidden sm:block">
+                    {melhor ? fmtHora(melhor.consultado_em) : "—"}
+                  </div>
+                  <div className="w-24 text-right font-semibold text-primary shrink-0">
+                    {melhor ? brl(Number(melhor.preco)) : "—"}
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <p className="text-xs text-muted-foreground text-center">
