@@ -1,5 +1,4 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,20 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Plus, RefreshCcw, ChevronRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
-  brl, fmtDia, fmtHora, imagemUrl, useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, listaEstabsOrdenada,
+  brl, fmtDia, fmtHora, fmtDataHora, vendaEm, imagemUrl,
+  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, useColetas, listaEstabsOrdenada,
   type Estab, type Hist,
 } from "@/lib/precos";
 
 export const Route = createFileRoute("/_authenticated/")({
   component: Painel,
 });
-
-const fmtDataHora = (d?: string | null) =>
-  d
-    ? new Date(d).toLocaleString("pt-BR", {
-        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
-      })
-    : "nunca";
 
 function Painel() {
   const navigate = useNavigate();
@@ -31,19 +24,7 @@ function Painel() {
   const ativosQ = useAtivos();
   const estabsQ = useEstabs();
   const historicoQ = useHistorico(produtosQ.data?.map((p) => p.id));
-  const coletasQ = useQuery({
-    queryKey: ["minha-config-coletas"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data } = await supabase
-        .from("configuracoes")
-        .select("ultima_coleta_manual, ultima_coleta_automatica")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      return data;
-    },
-  });
+  const coletasQ = useColetas();
 
   const apelidosQ = useApelidos();
   const ativos = ativosQ.data ?? new Set<string>();
@@ -212,10 +193,10 @@ function Painel() {
                     </div>
                   </div>
                   <div className="w-24 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
-                    {melhor ? fmtDia(melhor.consultado_em) : "—"}
+                    {melhor ? fmtDia(vendaEm(melhor)) : "—"}
                   </div>
                   <div className="w-16 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
-                    {melhor ? fmtHora(melhor.consultado_em) : "—"}
+                    {melhor ? fmtHora(vendaEm(melhor)) : "—"}
                   </div>
                   <div className="w-24 text-right font-semibold text-primary shrink-0">
                     {melhor ? brl(Number(melhor.preco)) : "—"}

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2, ChevronDown, Upload, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, imagemUrl,
+  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, useColetas, imagemUrl, fmtDataHora,
   type Estab, type Hist, type Produto,
 } from "@/lib/precos";
 import { ProdutoDetalhe } from "@/components/produto-detalhe";
@@ -31,6 +31,7 @@ function Produtos() {
   const historicoQ = useHistorico(produtosQ.data?.map((x) => x.id));
 
   const apelidosQ = useApelidos();
+  const coletasQ = useColetas();
   const ativos = ativosQ.data ?? new Set<string>();
   const estabs = estabsQ.data ?? new Map<string, Estab>();
   const apelidos = apelidosQ.data ?? new Map<string, string>();
@@ -77,6 +78,17 @@ function Produtos() {
         <Button onClick={() => navigate({ to: "/produtos/novo" })}>
           <Plus className="h-4 w-4 mr-1" /> Adicionar
         </Button>
+      </div>
+
+      <div className="rounded-md border px-3 py-2 text-xs text-muted-foreground space-y-1">
+        <div>
+          Última consulta manual:{" "}
+          <span className="font-medium text-foreground">{fmtDataHora(coletasQ.data?.ultima_coleta_manual)}</span>
+        </div>
+        <div>
+          Última consulta automática:{" "}
+          <span className="font-medium text-foreground">{fmtDataHora(coletasQ.data?.ultima_coleta_automatica)}</span>
+        </div>
       </div>
 
       <Card>

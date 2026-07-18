@@ -12,10 +12,11 @@ const SEFAZ_URL =
   "http://api.sefaz.al.gov.br/sfz-economiza-alagoas-api/api/public/produto/pesquisa";
 
 interface SefazItem {
-  produto: { descricao?: string; gtin?: string; venda?: { valorVenda?: number } };
+  produto: { descricao?: string; gtin?: string; venda?: { valorVenda?: number; dataVenda?: string } };
   estabelecimento: {
     cnpj?: string;
     nomeFantasia?: string;
+    razaoSocial?: string;
     endereco?: { nomeLogradouro?: string; numeroImovel?: string; bairro?: string; municipio?: string } | string;
     latitude?: number;
     longitude?: number;
@@ -105,11 +106,12 @@ Deno.serve(async (req) => {
           const cnpj = item.estabelecimento?.cnpj;
           const preco = item.produto?.venda?.valorVenda;
           if (!cnpj || preco == null) continue;
+          const dataVenda = item.produto?.venda?.dataVenda ?? null;
 
           await supabase.from("estabelecimentos").upsert(
             {
               cnpj,
-              nome: item.estabelecimento.nomeFantasia ?? cnpj,
+              nome: item.estabelecimento.nomeFantasia ?? item.estabelecimento.razaoSocial ?? cnpj,
               endereco: formatEndereco(item.estabelecimento.endereco),
               latitude: item.estabelecimento.latitude ?? null,
               longitude: item.estabelecimento.longitude ?? null,
@@ -128,6 +130,7 @@ Deno.serve(async (req) => {
             produto_id: p.id,
             estabelecimento_cnpj: cnpj,
             preco,
+            data_venda: dataVenda,
           });
           if (!errH) inseridos++;
         }

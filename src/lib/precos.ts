@@ -15,7 +15,13 @@ export type Hist = {
   estabelecimento_cnpj: string;
   preco: number;
   consultado_em: string;
+  data_venda?: string | null;
 };
+
+// Hora da VENDA (o que interessa exibir). Cai pro consultado_em em registros
+// antigos que ainda não têm data_venda.
+export const vendaEm = (h: { data_venda?: string | null; consultado_em: string }) =>
+  h.data_venda ?? h.consultado_em;
 
 export const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -25,6 +31,28 @@ export const fmtDia = (d: string) =>
   new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 export const fmtHora = (d: string) =>
   new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+export const fmtDataHora = (d?: string | null) =>
+  d
+    ? new Date(d).toLocaleString("pt-BR", {
+        day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+      })
+    : "nunca";
+
+export function useColetas() {
+  return useQuery({
+    queryKey: ["minha-config-coletas"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      const { data } = await supabase
+        .from("configuracoes")
+        .select("ultima_coleta_manual, ultima_coleta_automatica")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+}
 
 // URL pública da imagem do produto (bucket produtos-img).
 export function imagemUrl(path: string | null | undefined): string | null {
@@ -96,15 +124,19 @@ export function useHistorico(produtoIds: string[] | undefined) {
       const ids = produtoIds ?? [];
       if (!ids.length) return new Map();
       const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-      const { data, error } = await supabase
-        .from("historico_precos")
-        .select("id, produto_id, estabelecimento_cnpj, preco, consultado_em")
-        .in("produto_id", ids)
-        .gte("consultado_em", since)
-        .order("consultado_em", { ascending: true });
-      if (error) throw error;
+      const base = "id, produto_id, estabelecimento_cnpj, preco, consultado_em";
+      const q = (cols: string) =>
+        supabase
+          .from("historico_precos")
+          .select(cols)
+          .in("produto_id", ids)
+          .gte("consultado_em", since)
+          .order("consultado_em", { ascending: true });
+      let res = await q(`${base}, data_venda`);
+      if (res.error) res = await q(base); // coluna data_venda ainda não existe
+      if (res.error) throw res.error;
       const m = new Map<string, Hist[]>();
-      for (const r of data ?? []) {
+      for (const r of (res.data ?? []) as unknown as Hist[]) {
         const arr = m.get(r.produto_id) ?? [];
         arr.push(r as Hist);
         m.set(r.produto_id, arr);

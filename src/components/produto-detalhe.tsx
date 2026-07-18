@@ -4,7 +4,7 @@ import {
 } from "recharts";
 import { TrendingDown, TrendingUp, Trophy, X } from "lucide-react";
 import {
-  brl, fmtData, fmtDia, fmtHora, calcResumo, filtraAtivos, listaEstabsOrdenada, nomeExib,
+  brl, fmtData, fmtDia, fmtHora, vendaEm, calcResumo, filtraAtivos, listaEstabsOrdenada, nomeExib,
   type Hist, type Estab,
 } from "@/lib/precos";
 
@@ -21,7 +21,7 @@ export function ProdutoDetalhe({
     const ativosHs = filtraAtivos(hist, ativos);
     const por: Record<string, { preco: number; cnpj: string }> = {};
     for (const h of ativosHs) {
-      const dt = new Date(h.consultado_em);
+      const dt = new Date(vendaEm(h));
       const d = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
       const v = Number(h.preco);
       if (por[d] == null || v < por[d].preco) por[d] = { preco: v, cnpj: h.estabelecimento_cnpj };
@@ -145,10 +145,10 @@ export function ProdutoDetalhe({
                     <div className="text-xs text-muted-foreground truncate">{it.estab?.endereco}</div>
                   </div>
                   <div className="w-24 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
-                    {fmtDia(it.consultado_em)}
+                    {fmtDia(vendaEm(it))}
                   </div>
                   <div className="w-16 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
-                    {fmtHora(it.consultado_em)}
+                    {fmtHora(vendaEm(it))}
                   </div>
                   <div className={`w-24 text-right font-semibold shrink-0 ${i === 0 ? "text-primary" : ""}`}>
                     {brl(Number(it.preco))}

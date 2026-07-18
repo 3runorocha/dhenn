@@ -35,6 +35,7 @@ CREATE TABLE public.historico_precos (
   produto_id uuid NOT NULL REFERENCES public.produtos(id) ON DELETE CASCADE,
   estabelecimento_cnpj text NOT NULL REFERENCES public.estabelecimentos(cnpj) ON DELETE CASCADE,
   preco numeric NOT NULL,
+  data_venda timestamptz,
   consultado_em timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX historico_produto_data_idx ON public.historico_precos(produto_id, consultado_em DESC);

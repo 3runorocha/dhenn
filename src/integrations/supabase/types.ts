@@ -115,6 +115,7 @@ export type Database = {
       historico_precos: {
         Row: {
           consultado_em: string
+          data_venda: string | null
           estabelecimento_cnpj: string
           id: string
           preco: number
@@ -122,6 +123,7 @@ export type Database = {
         }
         Insert: {
           consultado_em?: string
+          data_venda?: string | null
           estabelecimento_cnpj: string
           id?: string
           preco: number
@@ -129,6 +131,7 @@ export type Database = {
         }
         Update: {
           consultado_em?: string
+          data_venda?: string | null
           estabelecimento_cnpj?: string
           id?: string
           preco?: number
