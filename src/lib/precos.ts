@@ -178,6 +178,8 @@ export function nomeExib(
   return apelidos?.get(cnpj) || estabs.get(cnpj)?.nome || cnpj;
 }
 
+export type EstabItem = ReturnType<typeof listaEstabsOrdenada>[number];
+
 // Último preço por estabelecimento ativo, do menor pro maior.
 export function listaEstabsOrdenada(
   hs: Hist[],

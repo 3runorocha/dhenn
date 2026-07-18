@@ -2,10 +2,10 @@ import { useMemo, useState, type ReactNode } from "react";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import { TrendingDown, TrendingUp, Trophy, X } from "lucide-react";
+import { TrendingDown, TrendingUp, Trophy, Clock, X } from "lucide-react";
 import {
   brl, fmtData, fmtDia, fmtHora, vendaEm, calcResumo, filtraAtivos, listaEstabsOrdenada, nomeExib,
-  type Hist, type Estab,
+  type Hist, type Estab, type EstabItem,
 } from "@/lib/precos";
 
 type Popup = { x: number; y: number; data: string; preco: number; estab: string };
@@ -40,6 +40,17 @@ export function ProdutoDetalhe({
     () => listaEstabsOrdenada(hist, ativos, estabs, apelidos),
     [hist, ativos, estabs, apelidos],
   );
+
+  // Destaques: mais barato (menor preço) e mais recente (venda mais recente,
+  // desempate pelo mais barato).
+  const maisBarato = lista[0] ?? null;
+  const maisRecente = useMemo(() => {
+    if (!lista.length) return null;
+    return [...lista].sort((a, b) => {
+      const dv = +new Date(vendaEm(b)) - +new Date(vendaEm(a));
+      return dv !== 0 ? dv : Number(a.preco) - Number(b.preco);
+    })[0];
+  }, [lista]);
 
   return (
     <div className="space-y-6">
@@ -121,6 +132,13 @@ export function ProdutoDetalhe({
         )}
       </div>
 
+      {lista.length > 0 && (
+        <div className="space-y-2">
+          {maisBarato && <Destaque label="Mais barato" icon={<Trophy className="h-3.5 w-3.5" />} it={maisBarato} />}
+          {maisRecente && <Destaque label="Mais recente" icon={<Clock className="h-3.5 w-3.5" />} it={maisRecente} />}
+        </div>
+      )}
+
       <div>
         <h3 className="text-sm font-semibold mb-2">Estabelecimentos ativos</h3>
         {lista.length ? (
@@ -162,6 +180,27 @@ export function ProdutoDetalhe({
             Nenhum estabelecimento ativo registrou esse produto recentemente.
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Destaque({ label, icon, it }: { label: string; icon: ReactNode; it: EstabItem }) {
+  return (
+    <div className="flex items-center gap-3 rounded-md border p-3">
+      <span className="shrink-0 inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-primary">
+        {icon}
+        {label}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="font-medium truncate">{it.nome}</div>
+        <div className="text-xs text-muted-foreground truncate">{it.estab?.endereco}</div>
+      </div>
+      <div className="text-right shrink-0">
+        <div className="font-semibold text-primary">{brl(Number(it.preco))}</div>
+        <div className="text-xs text-muted-foreground">
+          {fmtDia(vendaEm(it))} · {fmtHora(vendaEm(it))}
+        </div>
       </div>
     </div>
   );
