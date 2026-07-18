@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedEstabelecimentosRouteImport } from './routes/_authenticated/estabelecimentos'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedArquivosRouteImport } from './routes/_authenticated/arquivos'
 import { Route as AuthenticatedProdutosIndexRouteImport } from './routes/_authenticated/produtos.index'
 import { Route as AuthenticatedProdutosNovoRouteImport } from './routes/_authenticated/produtos.novo'
 
@@ -43,6 +44,11 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedArquivosRoute = AuthenticatedArquivosRouteImport.update({
+  id: '/arquivos',
+  path: '/arquivos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProdutosIndexRoute =
   AuthenticatedProdutosIndexRouteImport.update({
     id: '/produtos/',
@@ -59,6 +65,7 @@ const AuthenticatedProdutosNovoRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
+  '/arquivos': typeof AuthenticatedArquivosRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/produtos/novo': typeof AuthenticatedProdutosNovoRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/arquivos': typeof AuthenticatedArquivosRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/': typeof AuthenticatedIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/arquivos': typeof AuthenticatedArquivosRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/estabelecimentos': typeof AuthenticatedEstabelecimentosRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/arquivos'
     | '/configuracoes'
     | '/estabelecimentos'
     | '/produtos/novo'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/arquivos'
     | '/configuracoes'
     | '/estabelecimentos'
     | '/'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/arquivos'
     | '/_authenticated/configuracoes'
     | '/_authenticated/estabelecimentos'
     | '/_authenticated/'
@@ -152,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arquivos': {
+      id: '/_authenticated/arquivos'
+      path: '/arquivos'
+      fullPath: '/arquivos'
+      preLoaderRoute: typeof AuthenticatedArquivosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/produtos/': {
       id: '/_authenticated/produtos/'
       path: '/produtos'
@@ -170,6 +189,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedArquivosRoute: typeof AuthenticatedArquivosRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedEstabelecimentosRoute: typeof AuthenticatedEstabelecimentosRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
@@ -178,6 +198,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedArquivosRoute: AuthenticatedArquivosRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedEstabelecimentosRoute: AuthenticatedEstabelecimentosRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
