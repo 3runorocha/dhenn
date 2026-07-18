@@ -22,6 +22,8 @@ export type Database = {
           longitude: number | null
           raio_busca: number
           tema: string
+          ultima_coleta_automatica: string | null
+          ultima_coleta_manual: string | null
           updated_at: string
           user_id: string
         }
@@ -32,6 +34,8 @@ export type Database = {
           longitude?: number | null
           raio_busca?: number
           tema?: string
+          ultima_coleta_automatica?: string | null
+          ultima_coleta_manual?: string | null
           updated_at?: string
           user_id: string
         }
@@ -42,6 +46,8 @@ export type Database = {
           longitude?: number | null
           raio_busca?: number
           tema?: string
+          ultima_coleta_automatica?: string | null
+          ultima_coleta_manual?: string | null
           updated_at?: string
           user_id?: string
         }

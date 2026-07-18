@@ -67,6 +67,8 @@ CREATE TABLE public.configuracoes (
   raio_busca int NOT NULL DEFAULT 5,
   tema text NOT NULL DEFAULT 'light',
   cor_primaria text NOT NULL DEFAULT '#2563eb',
+  ultima_coleta_manual timestamptz,
+  ultima_coleta_automatica timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.configuracoes TO authenticated;

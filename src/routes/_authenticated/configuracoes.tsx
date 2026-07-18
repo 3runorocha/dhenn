@@ -36,7 +36,6 @@ function Configuracoes() {
   const [lng, setLng] = useState<number | null>(null);
   const [raio, setRaio] = useState(5);
   const [tema, setTema] = useState<"light" | "dark">("light");
-  const [cor, setCor] = useState("#2563eb");
   const [salvando, setSalvando] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
 
@@ -47,12 +46,11 @@ function Configuracoes() {
     setLng(q.data.longitude != null ? Number(q.data.longitude) : null);
     setRaio(q.data.raio_busca ?? 5);
     setTema((q.data.tema as "light" | "dark") ?? "light");
-    setCor(q.data.cor_primaria ?? "#2563eb");
   }, [q.data]);
 
   useEffect(() => {
-    applyTheme({ tema, cor_primaria: cor });
-  }, [tema, cor]);
+    applyTheme({ tema });
+  }, [tema]);
 
   async function geocodificar() {
     if (!endereco.trim()) return toast.error("Informe um endereço");
@@ -83,7 +81,6 @@ function Configuracoes() {
         longitude: lng,
         raio_busca: raio,
         tema,
-        cor_primaria: cor,
         updated_at: new Date().toISOString(),
       });
     setSalvando(false);
@@ -144,20 +141,6 @@ function Configuracoes() {
               Tema escuro
             </Label>
             <Switch checked={tema === "dark"} onCheckedChange={(v) => setTema(v ? "dark" : "light")} />
-          </div>
-          <div className="space-y-1">
-            <Label>Cor principal</Label>
-            <div className="flex items-center gap-2">
-              <input
-                type="color"
-                value={cor}
-                onChange={(e) => setCor(e.target.value)}
-                className="h-10 w-14 rounded border cursor-pointer"
-              />
-              <Input value={cor} onChange={(e) => setCor(e.target.value)} className="font-mono" />
-              <div className="h-10 w-10 rounded border" style={{ backgroundColor: cor }} />
-            </div>
-            <p className="text-xs text-muted-foreground">A interface atualiza em tempo real.</p>
           </div>
         </CardContent>
       </Card>

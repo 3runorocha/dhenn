@@ -32,7 +32,7 @@ async function consultarSefaz(token: string, gtin: string, lat: number, lng: num
   const body = {
     produto: { gtin },
     estabelecimento: { geolocalizacao: { latitude: lat, longitude: lng, raio } },
-    dias: 2,
+    dias: 7,
   };
   const resp = await fetch(SEFAZ_URL, {
     method: "POST",
@@ -135,6 +135,13 @@ Deno.serve(async (req) => {
         erros.push(`${p.nome}: ${String(e).slice(0, 120)}`);
       }
     }
+
+    // Registra o horário desta coleta (manual = veio com user_id; automática = cron)
+    const colColuna = userIdFilter ? "ultima_coleta_manual" : "ultima_coleta_automatica";
+    await supabase
+      .from("configuracoes")
+      .update({ [colColuna]: new Date().toISOString() })
+      .in("user_id", userIds);
 
     return new Response(
       JSON.stringify({ ok: true, produtos: produtos.length, inseridos, erros }),

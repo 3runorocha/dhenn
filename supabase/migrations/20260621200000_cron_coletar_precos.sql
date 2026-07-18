@@ -8,10 +8,11 @@ SELECT cron.schedule(
   '0 */6 * * *',
   $$
     SELECT net.http_post(
-      url := 'https://rlhzpdjthpmsxwufjuld.supabase.co/functions/v1/coletar-precos',
+      url := 'https://wflarolzpwwecyarwpci.supabase.co/functions/v1/coletar-precos',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.service_role_key', true)
+        'Authorization', 'Bearer ' || current_setting('app.service_role_key', true),
+        'apikey', current_setting('app.service_role_key', true)
       ),
       body := '{}'::jsonb
     );

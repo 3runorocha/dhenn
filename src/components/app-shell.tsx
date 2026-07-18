@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const novo = cfg?.tema === "dark" ? "light" : "dark";
-    applyTheme({ tema: novo, cor_primaria: cfg?.cor_primaria });
+    applyTheme({ tema: novo });
     await supabase.from("configuracoes").upsert({ user_id: user.id, tema: novo });
     qc.invalidateQueries({ queryKey: ["minha-configuracao"] });
   }
