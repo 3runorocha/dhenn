@@ -1,7 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export type Produto = { id: string; nome: string; gtin: string | null; created_at?: string };
+export type Produto = {
+  id: string;
+  nome: string;
+  gtin: string | null;
+  created_at?: string;
+  imagem_path?: string | null;
+};
 export type Estab = { cnpj: string; nome: string; endereco: string | null };
 export type Hist = {
   id: string;
@@ -20,16 +26,25 @@ export const fmtDia = (d: string) =>
 export const fmtHora = (d: string) =>
   new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
+// URL pública da imagem do produto (bucket produtos-img).
+export function imagemUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  return supabase.storage.from("produtos-img").getPublicUrl(path).data.publicUrl;
+}
+
 export function useProdutos() {
   return useQuery({
     queryKey: ["produtos"],
     queryFn: async (): Promise<Produto[]> => {
-      const { data, error } = await supabase
-        .from("produtos")
-        .select("id, nome, gtin, created_at")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      const first = await supabase.from("produtos").select("id, nome, gtin, created_at, imagem_path");
+      let rows = first.data as Produto[] | null;
+      if (first.error) {
+        // coluna imagem_path ainda não existe — cai pro select básico
+        const fb = await supabase.from("produtos").select("id, nome, gtin, created_at");
+        if (fb.error) throw fb.error;
+        rows = fb.data as Produto[] | null;
+      }
+      return (rows ?? []).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
     },
   });
 }

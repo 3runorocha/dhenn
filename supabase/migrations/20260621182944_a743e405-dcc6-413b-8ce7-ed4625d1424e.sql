@@ -6,6 +6,7 @@ CREATE TABLE public.produtos (
   nome text NOT NULL,
   gtin text,
   descricao text,
+  imagem_path text,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX produtos_user_id_idx ON public.produtos(user_id);

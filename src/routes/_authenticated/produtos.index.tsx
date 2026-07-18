@@ -4,10 +4,11 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, ChevronDown } from "lucide-react";
+import { Plus, Trash2, ChevronDown, Upload, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import {
-  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, type Estab, type Hist,
+  useProdutos, useAtivos, useEstabs, useApelidos, useHistorico, imagemUrl,
+  type Estab, type Hist, type Produto,
 } from "@/lib/precos";
 import { ProdutoDetalhe } from "@/components/produto-detalhe";
 
@@ -44,13 +45,33 @@ function Produtos() {
     qc.invalidateQueries({ queryKey: ["produtos"] });
   }
 
+  async function enviarImagem(prod: Produto, file: File) {
+    if (!["image/png", "image/webp", "image/jpeg"].includes(file.type)) {
+      return toast.error("Use PNG, WebP ou JPG.");
+    }
+    if (file.size > 5 * 1024 * 1024) return toast.error("Imagem muito grande (máx 5 MB).");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const path = `${user.id}/${prod.id}-${Date.now()}.${ext}`;
+    if (prod.imagem_path) await supabase.storage.from("produtos-img").remove([prod.imagem_path]);
+    const { error: upErr } = await supabase.storage
+      .from("produtos-img")
+      .upload(path, file, { contentType: file.type });
+    if (upErr) return toast.error("Erro no upload: " + upErr.message);
+    const { error: dbErr } = await supabase.from("produtos").update({ imagem_path: path }).eq("id", prod.id);
+    if (dbErr) return toast.error(dbErr.message);
+    toast.success("Imagem salva.");
+    qc.invalidateQueries({ queryKey: ["produtos"] });
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Meus produtos</h1>
           <p className="text-sm text-muted-foreground">
-            Clique num produto pra ver o histórico. Coleta automática a cada 6 horas.
+            Clique num produto pra ver o histórico e adicionar uma imagem. Coleta automática a cada hora.
           </p>
         </div>
         <Button onClick={() => navigate({ to: "/produtos/novo" })}>
@@ -104,7 +125,34 @@ function Produtos() {
                       </Button>
                     </div>
                     {open && (
-                      <div className="pb-4">
+                      <div className="pb-4 space-y-4">
+                        <div className="flex items-center gap-3">
+                          {prod.imagem_path ? (
+                            <img
+                              src={imagemUrl(prod.imagem_path)!}
+                              alt={prod.nome}
+                              className="h-20 w-20 rounded-md object-cover border"
+                            />
+                          ) : (
+                            <div className="flex h-20 w-20 items-center justify-center rounded-md border bg-muted">
+                              <ImagePlus className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-sm hover:bg-accent">
+                            <Upload className="h-4 w-4" />
+                            {prod.imagem_path ? "Trocar imagem" : "Adicionar imagem"}
+                            <input
+                              type="file"
+                              accept="image/png,image/webp,image/jpeg"
+                              className="hidden"
+                              onChange={(ev) => {
+                                const f = ev.target.files?.[0];
+                                if (f) enviarImagem(prod, f);
+                                ev.target.value = "";
+                              }}
+                            />
+                          </label>
+                        </div>
                         <ProdutoDetalhe
                           hist={histMap.get(prod.id) ?? []}
                           ativos={ativos}

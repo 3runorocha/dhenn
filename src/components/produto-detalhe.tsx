@@ -127,8 +127,8 @@ export function ProdutoDetalhe({
           <div className="border rounded-md overflow-hidden">
             <div className="flex items-center gap-3 px-3 py-2 text-[11px] uppercase tracking-wide text-muted-foreground bg-muted/40 border-b">
               <div className="flex-1">Estabelecimento</div>
-              <div className="w-20 text-right hidden sm:block">Data</div>
-              <div className="w-12 text-right hidden sm:block">Hora</div>
+              <div className="w-24 text-right hidden sm:block">Data</div>
+              <div className="w-16 text-right hidden sm:block">Hora</div>
               <div className="w-24 text-right">Valor</div>
             </div>
             <ul className="divide-y">
@@ -144,10 +144,10 @@ export function ProdutoDetalhe({
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{it.estab?.endereco}</div>
                   </div>
-                  <div className="w-20 text-right text-xs text-muted-foreground shrink-0 hidden sm:block">
+                  <div className="w-24 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
                     {fmtDia(it.consultado_em)}
                   </div>
-                  <div className="w-12 text-right text-xs text-muted-foreground shrink-0 hidden sm:block">
+                  <div className="w-16 text-right text-sm text-muted-foreground shrink-0 hidden sm:block">
                     {fmtHora(it.consultado_em)}
                   </div>
                   <div className={`w-24 text-right font-semibold shrink-0 ${i === 0 ? "text-primary" : ""}`}>

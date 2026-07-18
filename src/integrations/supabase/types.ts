@@ -157,6 +157,7 @@ export type Database = {
           descricao: string | null
           gtin: string | null
           id: string
+          imagem_path: string | null
           nome: string
           user_id: string
         }
@@ -165,6 +166,7 @@ export type Database = {
           descricao?: string | null
           gtin?: string | null
           id?: string
+          imagem_path?: string | null
           nome: string
           user_id: string
         }
@@ -173,6 +175,7 @@ export type Database = {
           descricao?: string | null
           gtin?: string | null
           id?: string
+          imagem_path?: string | null
           nome?: string
           user_id?: string
         }
