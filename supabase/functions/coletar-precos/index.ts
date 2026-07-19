@@ -17,7 +17,9 @@ interface SefazItem {
     cnpj?: string;
     nomeFantasia?: string;
     razaoSocial?: string;
-    endereco?: { nomeLogradouro?: string; numeroImovel?: string; bairro?: string; municipio?: string } | string;
+    endereco?:
+      | { nomeLogradouro?: string; numeroImovel?: string; bairro?: string; municipio?: string; codigoIBGE?: number }
+      | string;
     latitude?: number;
     longitude?: number;
   };
@@ -27,6 +29,19 @@ function formatEndereco(e: SefazItem["estabelecimento"]["endereco"]): string {
   if (!e) return "";
   if (typeof e === "string") return e;
   return [e.nomeLogradouro, e.numeroImovel, e.bairro, e.municipio].filter(Boolean).join(", ");
+}
+
+// A SEFAZ busca por raio, o que pode incluir municípios vizinhos. Aceitamos só
+// Maceió (código IBGE 2704302; fallback pelo nome do município).
+const IBGE_MACEIO = 2704302;
+function ehMaceio(est: SefazItem["estabelecimento"]): boolean {
+  const e = est.endereco;
+  if (e && typeof e === "object") {
+    if (typeof e.codigoIBGE === "number") return e.codigoIBGE === IBGE_MACEIO;
+    if (e.municipio) return e.municipio.toUpperCase().includes("MACEI");
+  }
+  if (typeof e === "string") return e.toUpperCase().includes("MACEI");
+  return false;
 }
 
 async function consultarSefaz(token: string, gtin: string, lat: number, lng: number, raio: number) {
@@ -106,6 +121,7 @@ Deno.serve(async (req) => {
           const cnpj = item.estabelecimento?.cnpj;
           const preco = item.produto?.venda?.valorVenda;
           if (!cnpj || preco == null) continue;
+          if (!ehMaceio(item.estabelecimento)) continue; // só Maceió
           const dataVenda = item.produto?.venda?.dataVenda ?? null;
 
           await supabase.from("estabelecimentos").upsert(

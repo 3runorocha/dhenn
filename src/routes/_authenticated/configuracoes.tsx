@@ -32,8 +32,8 @@ function Configuracoes() {
   });
 
   const [endereco, setEndereco] = useState("");
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
+  const [latTexto, setLatTexto] = useState("");
+  const [lngTexto, setLngTexto] = useState("");
   const [raio, setRaio] = useState(5);
   const [tema, setTema] = useState<"light" | "dark">("light");
   const [salvando, setSalvando] = useState(false);
@@ -42,8 +42,8 @@ function Configuracoes() {
   useEffect(() => {
     if (!q.data) return;
     setEndereco(q.data.endereco ?? "");
-    setLat(q.data.latitude != null ? Number(q.data.latitude) : null);
-    setLng(q.data.longitude != null ? Number(q.data.longitude) : null);
+    setLatTexto(q.data.latitude != null ? String(q.data.latitude) : "");
+    setLngTexto(q.data.longitude != null ? String(q.data.longitude) : "");
     setRaio(q.data.raio_busca ?? 5);
     setTema((q.data.tema as "light" | "dark") ?? "light");
   }, [q.data]);
@@ -59,8 +59,8 @@ function Configuracoes() {
       const { data, error } = await supabase.functions.invoke("geocode", { body: { endereco } });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setLat(data.latitude);
-      setLng(data.longitude);
+      setLatTexto(String(data.latitude));
+      setLngTexto(String(data.longitude));
       toast.success("Coordenadas obtidas!");
     } catch (e) {
       toast.error("Erro: " + String(e));
@@ -70,6 +70,11 @@ function Configuracoes() {
   }
 
   async function salvar() {
+    const latitude = latTexto.trim() ? Number(latTexto.replace(",", ".")) : null;
+    const longitude = lngTexto.trim() ? Number(lngTexto.replace(",", ".")) : null;
+    if ((latitude != null && Number.isNaN(latitude)) || (longitude != null && Number.isNaN(longitude))) {
+      return toast.error("Coordenadas inválidas — use números (ex.: -9.6658).");
+    }
     setSalvando(true);
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase
@@ -77,8 +82,8 @@ function Configuracoes() {
       .upsert({
         user_id: user!.id,
         endereco,
-        latitude: lat,
-        longitude: lng,
+        latitude,
+        longitude,
         raio_busca: raio,
         tema,
         updated_at: new Date().toISOString(),
@@ -109,13 +114,32 @@ function Configuracoes() {
           </div>
           <Button variant="outline" onClick={geocodificar} disabled={geocoding}>
             <MapPin className="h-4 w-4 mr-1" />
-            {geocoding ? "Convertendo…" : "Converter em coordenadas"}
+            {geocoding ? "Convertendo…" : "Converter endereço em coordenadas"}
           </Button>
-          {lat != null && lng != null && (
-            <p className="text-sm text-muted-foreground">
-              Coordenadas: {lat.toFixed(6)}, {lng.toFixed(6)}
-            </p>
-          )}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="space-y-1">
+              <Label>Latitude</Label>
+              <Input
+                value={latTexto}
+                onChange={(e) => setLatTexto(e.target.value)}
+                placeholder="-9.6658"
+                inputMode="decimal"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label>Longitude</Label>
+              <Input
+                value={lngTexto}
+                onChange={(e) => setLngTexto(e.target.value)}
+                placeholder="-35.7353"
+                inputMode="decimal"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Preencha com o botão acima, ou <strong>digite/cole as coordenadas manualmente</strong> se o
+            endereço não vier certo (ex.: pegue no Google Maps).
+          </p>
           <div className="space-y-2 pt-2">
             <div className="flex justify-between text-sm">
               <Label>Raio de busca</Label>
