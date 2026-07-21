@@ -120,13 +120,25 @@ Deno.serve(async (req) => {
               { onConflict: "user_id,estabelecimento_cnpj", ignoreDuplicates: true },
             );
 
-          const { error: errH } = await supabase.from("historico_precos").insert({
-            produto_id: p.id,
-            estabelecimento_cnpj: cnpj,
-            preco,
-            data_venda: dataVenda,
-          });
-          if (!errH) inseridos++;
+          // Upsert em vez de insert: a coleta roda de hora em hora e a SEFAZ só
+          // muda o registro quando há venda nova, então a mesma venda voltaria
+          // 24x por dia. A chave (produto, estabelecimento, data_venda) descarta
+          // a repetição e mantém a tabela do tamanho da informação real.
+          const linha = { produto_id: p.id, estabelecimento_cnpj: cnpj, preco, data_venda: dataVenda };
+          const { data: novo, error: errH } = await supabase
+            .from("historico_precos")
+            .upsert(linha, {
+              onConflict: "produto_id,estabelecimento_cnpj,data_venda",
+              ignoreDuplicates: true,
+            })
+            .select("id");
+          if (errH?.code === "42P10") {
+            // índice único ainda não criado no banco — grava sem deduplicar
+            const { error } = await supabase.from("historico_precos").insert(linha);
+            if (!error) inseridos++;
+          } else if (novo?.length) {
+            inseridos++;
+          }
         }
       } catch (e) {
         erros.push(`${p.nome}: ${String(e).slice(0, 120)}`);

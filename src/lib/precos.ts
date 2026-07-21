@@ -141,20 +141,36 @@ export function useHistorico(produtoIds: string[] | undefined) {
       if (!ids.length) return new Map();
       const since = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
       const base = "id, produto_id, estabelecimento_cnpj, preco, consultado_em";
-      const q = (cols: string) =>
+      const q = (cols: string, de: number, ate: number) =>
         supabase
           .from("historico_precos")
           .select(cols)
           .in("produto_id", ids)
           .gte("consultado_em", since)
-          .order("consultado_em", { ascending: true });
-      let res = await q(`${base}, data_venda`);
-      if (res.error) res = await q(base); // coluna data_venda ainda não existe
-      if (res.error) throw res.error;
+          .order("consultado_em", { ascending: true })
+          .range(de, ate);
+
+      // O PostgREST corta em 1000 linhas por requisição. Sem paginar, o app só
+      // enxergava as 1000 linhas mais antigas e ficava cego pro que veio depois.
+      const PAG = 1000;
+      const linhas: Hist[] = [];
+      let comDataVenda = true;
+      for (let pag = 0; ; pag++) {
+        let res = await q(comDataVenda ? `${base}, data_venda` : base, pag * PAG, pag * PAG + PAG - 1);
+        if (res.error && comDataVenda) {
+          comDataVenda = false; // coluna data_venda ainda não existe
+          res = await q(base, pag * PAG, pag * PAG + PAG - 1);
+        }
+        if (res.error) throw res.error;
+        const lote = (res.data ?? []) as unknown as Hist[];
+        linhas.push(...lote);
+        if (lote.length < PAG) break;
+      }
+
       const m = new Map<string, Hist[]>();
-      for (const r of (res.data ?? []) as unknown as Hist[]) {
+      for (const r of linhas) {
         const arr = m.get(r.produto_id) ?? [];
-        arr.push(r as Hist);
+        arr.push(r);
         m.set(r.produto_id, arr);
       }
       return m;
