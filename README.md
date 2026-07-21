@@ -203,12 +203,24 @@ sudo certbot --nginx -d seu-dominio.com
 
 ## Atualizar o app depois de mudanças
 
+A VM roda só o bundle pronto (`.output`) — não tem o repositório clonado. Builde
+na sua máquina e envie:
+
 ```bash
-cd ~/dhenn
-git pull
-npm install
+# na sua máquina, na raiz do projeto
 npm run build
-sudo systemctl restart dhenn
+tar czf - .output | ssh -i ~/.ssh/oracle_dhenn ubuntu@SEU_IP \
+  "cd ~/dhenn && rm -rf .output.new && mkdir .output.new && tar xzf - -C .output.new \
+   && rm -rf .output.old && mv .output .output.old && mv .output.new/.output .output \
+   && rmdir .output.new && sudo systemctl restart dhenn"
+```
+
+O `.output.old` fica como rollback: `mv .output.old .output && sudo systemctl restart dhenn`.
+
+Edge functions são independentes do frontend:
+
+```bash
+npx supabase functions deploy coletar-precos --no-verify-jwt
 ```
 
 ---
