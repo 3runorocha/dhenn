@@ -31,23 +31,15 @@ function formatEndereco(e: SefazItem["estabelecimento"]["endereco"]): string {
   return [e.nomeLogradouro, e.numeroImovel, e.bairro, e.municipio].filter(Boolean).join(", ");
 }
 
-// A SEFAZ busca por raio, o que pode incluir municípios vizinhos. Aceitamos só
-// Maceió (código IBGE 2704302; fallback pelo nome do município).
+// Busca por município em vez de raio: a SEFAZ não tem coordenada confiável para
+// vários estabelecimentos, então a busca geográfica perde mercados que existem
+// (raio 15km = máximo da API = 32 resultados; por município = 52, igual ao site).
 const IBGE_MACEIO = 2704302;
-function ehMaceio(est: SefazItem["estabelecimento"]): boolean {
-  const e = est.endereco;
-  if (e && typeof e === "object") {
-    if (typeof e.codigoIBGE === "number") return e.codigoIBGE === IBGE_MACEIO;
-    if (e.municipio) return e.municipio.toUpperCase().includes("MACEI");
-  }
-  if (typeof e === "string") return e.toUpperCase().includes("MACEI");
-  return false;
-}
 
-async function consultarSefaz(token: string, gtin: string, lat: number, lng: number, raio: number) {
+async function consultarSefaz(token: string, gtin: string) {
   const body = {
     produto: { gtin },
-    estabelecimento: { geolocalizacao: { latitude: lat, longitude: lng, raio } },
+    estabelecimento: { municipio: { codigoIBGE: IBGE_MACEIO } },
     dias: 7,
   };
   const resp = await fetch(SEFAZ_URL, {
@@ -97,31 +89,17 @@ Deno.serve(async (req) => {
     }
 
     const userIds = [...new Set(produtos.map((p) => p.user_id))];
-    const { data: configs } = await supabase
-      .from("configuracoes")
-      .select("user_id, latitude, longitude, raio_busca")
-      .in("user_id", userIds);
-    const configByUser = new Map(configs?.map((c) => [c.user_id, c]) ?? []);
 
     let inseridos = 0;
     const erros: string[] = [];
 
     for (const p of produtos) {
-      const cfg = configByUser.get(p.user_id);
-      if (!cfg?.latitude || !cfg?.longitude) continue;
       try {
-        const itens = await consultarSefaz(
-          token,
-          p.gtin!,
-          Number(cfg.latitude),
-          Number(cfg.longitude),
-          cfg.raio_busca ?? 5,
-        );
+        const itens = await consultarSefaz(token, p.gtin!);
         for (const item of itens) {
           const cnpj = item.estabelecimento?.cnpj;
           const preco = item.produto?.venda?.valorVenda;
           if (!cnpj || preco == null) continue;
-          if (!ehMaceio(item.estabelecimento)) continue; // só Maceió
           const dataVenda = item.produto?.venda?.dataVenda ?? null;
 
           await supabase.from("estabelecimentos").upsert(

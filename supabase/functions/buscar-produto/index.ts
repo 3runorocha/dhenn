@@ -1,5 +1,5 @@
-// Busca produtos na API da SEFAZ por GTIN ou por descrição.
-// Body: { gtin?: string, descricao?: string, latitude: number, longitude: number, raio: number }
+// Busca produtos na API da SEFAZ por GTIN ou por descrição, em Maceió.
+// Body: { gtin?: string, descricao?: string }
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -15,13 +15,14 @@ Deno.serve(async (req) => {
     const token = Deno.env.get("SEFAZ_APP_TOKEN");
     if (!token) throw new Error("SEFAZ_APP_TOKEN não configurado");
 
-    const { gtin, descricao, latitude, longitude, raio = 15 } = await req.json();
-    if (!latitude || !longitude) throw new Error("latitude/longitude obrigatórios");
+    const { gtin, descricao } = await req.json();
     if (!gtin && !descricao) throw new Error("informe gtin ou descricao");
 
+    // Busca por município (2704302 = Maceió): a geolocalização por raio perde
+    // estabelecimentos sem coordenada confiável na base da SEFAZ.
     const body: Record<string, unknown> = {
       produto: gtin ? { gtin } : { descricao },
-      estabelecimento: { geolocalizacao: { latitude, longitude, raio } },
+      estabelecimento: { municipio: { codigoIBGE: 2704302 } },
       dias: 10,
     };
 

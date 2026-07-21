@@ -122,23 +122,8 @@ function FormaBusca({ onDone }: { onDone: () => void }) {
     setBuscando(true);
     setResultados([]);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: cfg } = await supabase
-        .from("configuracoes")
-        .select("latitude, longitude, raio_busca")
-        .eq("user_id", user!.id)
-        .maybeSingle();
-      if (!cfg?.latitude || !cfg?.longitude) {
-        toast.error("Defina seu endereço em Configurações antes de buscar.");
-        return;
-      }
       const { data, error } = await supabase.functions.invoke("buscar-produto", {
-        body: {
-          descricao: termo,
-          latitude: Number(cfg.latitude),
-          longitude: Number(cfg.longitude),
-          raio: cfg.raio_busca ?? 15,
-        },
+        body: { descricao: termo },
       });
       if (error) throw error;
       setResultados(data?.resultados ?? []);
